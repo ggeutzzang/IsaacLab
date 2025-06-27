@@ -6,19 +6,22 @@
 """Test texture randomization in the cartpole scene using pytest."""
 
 from isaaclab.app import AppLauncher
+
 # launch omniverse app
 simulation_app = AppLauncher(headless=True).app
 
-import pytest
 import torch
+
 import omni.usd
+import pytest
 
 import isaaclab.envs.mdp as mdp
-from isaaclab.envs import ManagerBasedRLEnv
 from isaaclab.assets import Articulation
-from isaaclab_tasks.manager_based.classic.cartpole.cartpole_env_cfg import CartpoleEnvCfg
+from isaaclab.envs import ManagerBasedRLEnv
 from isaaclab.managers import CurriculumTermCfg as CurrTerm
 from isaaclab.utils import configclass
+
+from isaaclab_tasks.manager_based.classic.cartpole.cartpole_env_cfg import CartpoleEnvCfg
 
 
 def replace_value(env, env_id, data, value, num_steps):
@@ -36,37 +39,28 @@ class CurriculumsCfg:
         params={
             "address": "observations.policy.joint_pos_rel.func",
             "modify_fn": replace_value,
-            "modify_params": {
-                "value": mdp.joint_pos,
-                "num_steps": 1
-            }
-        }
+            "modify_params": {"value": mdp.joint_pos, "num_steps": 1},
+        },
     )
-    
+
     # test writing a term's param that involves dictionary.
     modify_reset_joint_pos = CurrTerm(
         func=mdp.modify_term_cfg,
         params={
             "address": "events.reset_pole_position.params.position_range",
             "modify_fn": replace_value,
-            "modify_params": {
-                "value": (-0.0, 0.0),
-                "num_steps": 1
-            }
-        }
+            "modify_params": {"value": (-0.0, 0.0), "num_steps": 1},
+        },
     )
-    
+
     # test writing a non_term env parameter using modify_env_param.
     modify_episode_max_length = CurrTerm(
         func=mdp.modify_env_param,
         params={
             "address": "cfg.episode_length_s",
             "modify_fn": replace_value,
-            "modify_params": {
-                "value": 20,
-                "num_steps": 1
-            }
-        }
+            "modify_params": {"value": 20, "num_steps": 1},
+        },
     )
 
 

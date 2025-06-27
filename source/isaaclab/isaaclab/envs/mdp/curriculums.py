@@ -47,7 +47,7 @@ class modify_env_param(ManagerTermBase):
     reads the current value, applies a user-provided `modify_fn`, and writes back
     the result. Since None in this case can sometime be desirable value to write, we
     use token, NO_CHANGE, as non-modification signal to this class, see usage below.
-    
+
     Usage:
         .. code-block:: python
             def resample_bucket_range(
@@ -74,6 +74,7 @@ class modify_env_param(ManagerTermBase):
                 }
             )
     """
+
     NO_CHANGE = object()
 
     def __init__(self, cfg, env):
@@ -118,7 +119,7 @@ class modify_env_param(ManagerTermBase):
 
         data = self.get_fn()
         new_val = modify_fn(self._env, env_ids, data, **modify_params)
-        if new_val is not self.NO_CHANGE: # if the modify_fn return NO_CHANGE signal, do not invoke self.set_fn
+        if new_val is not self.NO_CHANGE:  # if the modify_fn return NO_CHANGE signal, do not invoke self.set_fn
             self.set_fn(new_val)
 
     def _compile_accessors(self, root, path: str):
@@ -190,14 +191,14 @@ class modify_term_cfg(modify_env_param):
     Reads `cfg.params["address"]`, replaces only the first occurrence of "s."
     with "_manager.cfg.", and then behaves identically to ModifyEnvParam.
     for example: command_manager.cfg.object_pose.ranges.xpos -> commands.object_pose.ranges.xpos
-    
+
     Usage:
         .. code-block:: python
             def override_value(env, env_ids, data, value, num_steps):
                 if env.common_step_counter > num_steps:
                     return value
                 return mdp.modify_term_cfg.NO_CHANGE
-            
+
             command_object_pose_xrange_adr = CurrTerm(
                 func=mdp.modify_term_cfg,
                 params={
