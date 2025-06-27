@@ -165,6 +165,12 @@ class modify_env_param(ManagerTermBase):
                 tuple_list = list(self.container)
                 tuple_list[self.last] = val
                 self.container = tuple(tuple_list)
+        
+        elif isinstance(self.container, list):
+            getter = lambda: self.container[self.last]
+
+            def setter(val):
+                self.container[self.last] = val
 
         elif isinstance(self.container, dict):
             getter = lambda: self.container[self.last]
