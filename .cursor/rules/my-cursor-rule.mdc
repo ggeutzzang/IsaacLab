@@ -3,4 +3,5 @@ description:
 globs: 
 alwaysApply: true
 ---
-- print문의 문자열이나 주석 작성 시에, '이모지'를 쓰지 말것 
+- print문의 문자열이나 주석 작성 시에, '이모지'를 쓰지 말것
+- agent 모드에서 파이썬 스크립트를 실행할 때, 'source ~/.bashrc && conda activate env_isaaclab' 명령을 먼저 실행해서 환경을 세팅해줘
