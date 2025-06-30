@@ -103,12 +103,12 @@ class SO100CubeStackPinkIKAbsVisuomotorEnvCfg(stack_joint_pos_env_cfg.SO100CubeS
                 rot=(0.7071, 0, 0, 0.7071),
                 joint_pos={
                     # SO100 joints
-                    "shoulder_pan_joint": 0.0,
-                    "shoulder_lift_joint": 1.5708,
-                    "elbow_flex_joint": -1.5708,
-                    "wrist_flex_joint": 1.2,
-                    "wrist_roll_joint": 0.0,
-                    "gripper_joint": 0.0,
+                    "Rotation": 0.0,
+                    "Pitch": 1.5708,
+                    "Elbow": -1.5708,
+                    "Wrist_Pitch": 1.2,
+                    "Wrist_Roll": 0.0,
+                    "Jaw": 0.4,
                 },
                 joint_vel={".*": 0.0},
             ),
@@ -117,14 +117,14 @@ class SO100CubeStackPinkIKAbsVisuomotorEnvCfg(stack_joint_pos_env_cfg.SO100CubeS
         # Set actions for the specific robot type (SO100)
         self.actions.arm_action = PinkInverseKinematicsActionCfg(
             pink_controlled_joint_names=[
-                "shoulder_pan_joint",
-                "shoulder_lift_joint",
-                "elbow_flex_joint",
-                "wrist_flex_joint",
-                "wrist_roll_joint",
+                "Rotation",
+                "Pitch",
+                "Elbow",
+                "Wrist_Pitch",
+                "Wrist_Roll",
             ],
-            # Joints to be locked in URDF
-            ik_urdf_fixed_joint_names=["gripper_joint"],
+            # Joints to be locked in URDF (gripper joint)
+            ik_urdf_fixed_joint_names=["Jaw"],
             hand_joint_names=[],
             # the robot in the sim scene we are controlling
             asset_name="robot",
@@ -133,12 +133,12 @@ class SO100CubeStackPinkIKAbsVisuomotorEnvCfg(stack_joint_pos_env_cfg.SO100CubeS
             # The urdf has to be generated from the USD that is being used in the scene
             controller=PinkIKControllerCfg(
                 articulation_name="robot",
-                base_link_name="base",
+                base_link_name="Base",
                 num_hand_joints=0,
                 show_ik_warnings=True,
                 variable_input_tasks=[
                     FrameTask(
-                        "gripper",
+                        "SO_5DOF_ARM100_8j_URDF_SLDASM_Fixed_Jaw",
                         position_cost=1.0,  # [cost] / [m]
                         orientation_cost=1.0,  # [cost] / [rad]
                         lm_damping=10,  # dampening for solver for step jumps

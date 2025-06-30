@@ -21,16 +21,9 @@ gym.register(
     id="Isaac-PickPlace-GR1T2-Abs-Mimic-v0",
     entry_point="isaaclab_mimic.envs.pinocchio_envs:PickPlaceGR1T2MimicEnv",
     kwargs={
-        "env_cfg_entry_point": pickplace_gr1t2_mimic_env_cfg.PickPlaceGR1T2MimicEnvCfg,
+        "env_cfg_entry_point": PickPlaceGR1T2MimicEnvCfg,
     },
     disable_env_checker=True,
 )
 
-gym.register(
-    id="Isaac-Stack-SO100-Abs-Mimic-v0",
-    entry_point="isaaclab_mimic.envs.pinocchio_envs:StackSO100MimicEnv",
-    kwargs={
-        "env_cfg_entry_point": stack_so100_mimic_env_cfg.StackSO100MimicEnvCfg,
-    },
-    disable_env_checker=True,
-)
+# SO100 환경은 메인 __init__.py에서 등록됨

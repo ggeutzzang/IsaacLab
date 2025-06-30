@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Configuration for the Franka Emika robots.
+"""Configuration for the SO-100 robot.
 
 The following configurations are available:
 
@@ -20,50 +20,82 @@ from isaaclab.assets.articulation import ArticulationCfg
 # Configuration
 ##
 
+# Use newly generated USD file from URDF (fixed revolute joints)
+_SO100_USD_PATH = "/tmp/so100_final.usd"
+
 SO_100_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path=f"omniverse://isaac-dev.ov.nvidia.com/Users/ashwinvk@nvidia.com/so-100/so-100.usd",
+        usd_path=_SO100_USD_PATH,
         activate_contact_sensors=False,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
-            disable_gravity=True,
-            retain_accelerations=False,
-            linear_damping=0.0,
-            angular_damping=0.0,
-            max_linear_velocity=1000.0,
-            max_angular_velocity=1000.0,
-            max_depenetration_velocity=1.0,
+            disable_gravity=False,
+            max_depenetration_velocity=5.0,
         ),
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
-            enabled_self_collisions=True, solver_position_iteration_count=8, solver_velocity_iteration_count=4
+            enabled_self_collisions=True,
+            solver_position_iteration_count=8,
+            solver_velocity_iteration_count=0,
         ),
-        # collision_props=sim_utils.CollisionPropertiesCfg(contact_offset=0.005, rest_offset=0.0),
     ),
     init_state=ArticulationCfg.InitialStateCfg(
         joint_pos={
-            "shoulder_pan_joint": 0.0,
-            "shoulder_lift_joint": 0.0,
-            "elbow_flex_joint": 0.0,
-            "wrist_flex_joint": 0.0,
-            "wrist_roll_joint": 0.0,
-            "gripper_joint": 0.0,
+            "Rotation": 0.1,
+            "Pitch": 0.5,
+            "Elbow": 0.0,
+            "Wrist_Pitch": 0.0,
+            "Wrist_Roll": 0.0,
+            "Jaw": 0.4,
         },
+        joint_vel={".*": 0.0},
     ),
     actuators={
-        "all_joints": ImplicitActuatorCfg(
-            joint_names_expr=["shoulder_pan_joint", "shoulder_lift_joint", "elbow_flex_joint", "wrist_flex_joint", "wrist_roll_joint"],
-            effort_limit=None,
-            velocity_limit=None,
-            stiffness=None,
-            damping=None,
-            armature=0.0,
+        # Shoulder rotation moves: ALL mass (~0.8kg total)
+        "shoulder_rotation": ImplicitActuatorCfg(
+            joint_names_expr=["Rotation"],
+            effort_limit=1.9,
+            velocity_limit_sim=1.5,
+            stiffness=200.0,    # Highest - moves all mass
+            damping=80.0,
         ),
+        # Shoulder pitch moves: Everything except base (~0.65kg)
+        "shoulder_pitch": ImplicitActuatorCfg(
+            joint_names_expr=["Pitch"],
+            effort_limit=1.9,
+            velocity_limit_sim=1.5,
+            stiffness=170.0,    # Slightly less than rotation
+            damping=65.0,
+        ),
+        # Elbow moves: Lower arm, wrist, gripper (~0.38kg)
+        "elbow": ImplicitActuatorCfg(
+            joint_names_expr=["Elbow"],
+            effort_limit=1.9,
+            velocity_limit_sim=1.5,
+            stiffness=120.0,    # Reduced based on less mass
+            damping=45.0,
+        ),
+        # Wrist pitch moves: Wrist and gripper (~0.24kg)
+        "wrist_pitch": ImplicitActuatorCfg(
+            joint_names_expr=["Wrist_Pitch"],
+            effort_limit=1.9,
+            velocity_limit_sim=1.5,
+            stiffness=80.0,     # Reduced for less mass
+            damping=30.0,
+        ),
+        # Wrist roll moves: Gripper assembly (~0.14kg)
+        "wrist_roll": ImplicitActuatorCfg(
+            joint_names_expr=["Wrist_Roll"],
+            effort_limit=1.9,
+            velocity_limit_sim=1.5,
+            stiffness=50.0,     # Low mass to move
+            damping=20.0,
+        ),
+        # Gripper moves: Only moving jaw (~0.034kg)
         "gripper": ImplicitActuatorCfg(
-            joint_names_expr=["gripper_joint"],
-            effort_limit_sim=0.1,
-            velocity_limit_sim=2.175,
-            stiffness=8.0,
-            damping=0.4,
-            armature=0.0,
+            joint_names_expr=["Jaw"],
+            effort_limit=2.5,    # Increased from 1.9 to 2.5 for stronger grip
+            velocity_limit_sim=1.5,
+            stiffness=60.0,     # Increased from 25.0 to 60.0 for more reliable closing
+            damping=20.0,       # Increased from 10.0 to 20.0 for stability
         ),
     },
     soft_joint_pos_limit_factor=1.0,

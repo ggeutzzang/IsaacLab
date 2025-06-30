@@ -67,12 +67,12 @@ class SO100CubeStackJointPosEnvCfg(StackEnvCfg):
                                                         pos=(0, 0, 0.0),
                                                         rot=(0.7071, 0, 0, 0.7071),
                                                         joint_pos={
-                                                            "shoulder_pan_joint": 0.0,
-                                                            "shoulder_lift_joint": 1.5708,
-                                                            "elbow_flex_joint": -1.5708,
-                                                            "wrist_flex_joint": 0.0,
-                                                            "wrist_roll_joint": 0.0,
-                                                            "gripper_joint": 0.0,
+                                                            "Rotation": 0.0,
+                                                            "Pitch": 1.5708,
+                                                            "Elbow": -1.5708,
+                                                            "Wrist_Pitch": 0.0,
+                                                            "Wrist_Roll": 0.0,
+                                                            "Jaw": 0.4,
                                                         },
                                                         joint_vel={".*": 0.0},
                                                     ))
@@ -86,15 +86,14 @@ class SO100CubeStackJointPosEnvCfg(StackEnvCfg):
 
         # Set actions for the specific robot type (SO-100)
         self.actions.arm_action = mdp.JointPositionActionCfg(
-            asset_name="robot", joint_names=["shoulder_pan_joint", "shoulder_lift_joint", "elbow_flex_joint", "wrist_flex_joint", "wrist_roll_joint"], scale=1.0, use_default_offset=False
+            asset_name="robot", joint_names=["Rotation", "Pitch", "Elbow", "Wrist_Pitch", "Wrist_Roll"], scale=1.0, use_default_offset=False
         )
-        # # SO-100 doesn't have gripper, but we need to provide an action for compatibility
-        # # Use the last joint as a dummy gripper action
+        # SO-100 gripper action
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
-            joint_names=["gripper_joint"],
-            open_command_expr={"gripper_joint": 0.5},
-            close_command_expr={"gripper_joint": -0.1},
+            joint_names=["Jaw"],
+            open_command_expr={"Jaw": 0.5},
+            close_command_expr={"Jaw": 0.0},
         )
 
         # Rigid body properties of each cube
@@ -144,15 +143,15 @@ class SO100CubeStackJointPosEnvCfg(StackEnvCfg):
         marker_cfg.markers["frame"].scale = (0.1, 0.1, 0.1)
         marker_cfg.prim_path = "/Visuals/FrameTransformer"
         self.scene.ee_frame = FrameTransformerCfg(
-            prim_path="{ENV_REGEX_NS}/Robot/base",
+            prim_path="{ENV_REGEX_NS}/Robot/Base",
             debug_vis=False,
             visualizer_cfg=marker_cfg,
             target_frames=[
                 FrameTransformerCfg.FrameCfg(
-                    prim_path="{ENV_REGEX_NS}/Robot/gripper",
+                    prim_path="{ENV_REGEX_NS}/Robot/Fixed_Jaw",
                     name="end_effector",
                     offset=OffsetCfg(
-                        pos=[0.0, -0.1, 0.0],
+                        pos=(0.01, 0.0, 0.05),
                     ),
                 ),
             ],

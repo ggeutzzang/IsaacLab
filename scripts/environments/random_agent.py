@@ -9,6 +9,15 @@
 
 import argparse
 
+# Pink 라이브러리를 Isaac Sim보다 먼저 import (C++ 바인딩 충돌 방지)
+try:
+    import pink
+    from pink.configuration import Configuration
+    from pink.limits.configuration_limit import ConfigurationLimit
+    print("Pink 라이브러리 사전 로드 완료")
+except ImportError:
+    print("Pink 라이브러리 없음 - 계속 진행")
+
 from isaaclab.app import AppLauncher
 
 # add argparse arguments
@@ -33,6 +42,7 @@ import gymnasium as gym
 import torch
 
 import isaaclab_tasks  # noqa: F401
+import isaaclab_mimic.envs  # noqa: F401
 from isaaclab_tasks.utils import parse_env_cfg
 
 # PLACEHOLDER: Extension template (do not remove this comment)
