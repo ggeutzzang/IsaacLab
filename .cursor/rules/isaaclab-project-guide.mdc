@@ -1,0 +1,33 @@
+# IsaacLab 프로젝트 가이드
+
+## 프로젝트 구조
+- **메인 소스**: `source/isaaclab/` - IsaacLab 핵심 라이브러리
+- **에셋**: `source/isaaclab_assets/` - 로봇 및 오브젝트 설정
+- **태스크**: `source/isaaclab_tasks/` - 환경 및 태스크 설정
+- **RL**: `source/isaaclab_rl/` - 강화학습 관련
+- **Mimic**: `source/isaaclab_mimic/` - 모방학습 관련
+- **스크립트**: `scripts/` - 실행 스크립트 및 도구
+
+## SO-100 로봇 설정
+- **로봇 설정**: [source/isaaclab_assets/isaaclab_assets/robots/so_100.py](mdc:source/isaaclab_assets/isaaclab_assets/robots/so_100.py)
+- **스택 태스크**: `source/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/stack/config/so_100/`
+- **조인트 이름**: URDF에서는 `shoulder_pan`, Isaac Lab에서는 `shoulder_pan_joint` 사용
+
+## 중요 설정 파일들
+- **환경 설정**: `stack_joint_pos_env_cfg.py`, `stack_pink_ik_abs_env_cfg.py`, `stack_pink_ik_abs_visuomotor_env_cfg.py`
+- **Mimic 환경**: `source/isaaclab_mimic/isaaclab_mimic/envs/pinocchio_envs/stack_so100_mimic_env_cfg.py`
+
+## 실행 방법
+- **헤드리스**: `./isaaclab.sh -p script.py`
+- **GUI**: `./isaaclab.sh -p script.py --headless=False --enable_cameras=True`
+- **환경 수 설정**: `env_cfg.scene.num_envs = 1`
+
+## 주의사항
+- 테스트 파일은 `scripts/tests/`에 생성하되, `.gitignore`에 의해 무시됨
+- USD 파일 경로는 로컬 경로로 설정: `/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/so100.usd`
+- 카메라가 있는 환경은 `--enable_cameras=True` 필요
+description:
+globs:
+alwaysApply: false
+---
+ 

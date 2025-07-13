@@ -1,0 +1,66 @@
+# IsaacLab 디버깅 가이드
+
+## 일반적인 문제들
+
+### 1. 조인트 이름 불일치
+```
+Not all regular expressions are matched! Please check that the regular expressions are correct:
+    shoulder_pan_joint: []
+    shoulder_lift_joint: []
+Available strings: ['shoulder_pan', 'shoulder_lift', ...]
+```
+**해결**: URDF의 실제 조인트 이름과 Isaac Lab 설정의 조인트 이름을 일치시켜야 함
+
+### 2. USD 파일 접근 오류
+```
+Unable to copy file: 'omniverse://...'. Is the Nucleus Server running?
+```
+**해결**: 
+- 로컬 USD 파일 사용: `/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/so100.usd`
+- URDF를 USD로 변환: `python scripts/tools/convert_urdf.py`
+
+### 3. 카메라 렌더링 오류
+```
+A camera was spawned without the --enable_cameras flag
+```
+**해결**: `AppLauncher(headless=False, enable_cameras=True)` 사용
+
+### 4. 메모리 부족
+```
+SceneDbContext : TLAS limit buffer size 7374781440
+```
+**해결**: `env_cfg.scene.num_envs = 1` 설정
+
+## 디버깅 도구
+
+### 환경 정보 확인
+```python
+print(f"관찰 공간: {env.observation_space}")
+print(f"행동 공간: {env.action_space}")
+print(f"초기 관찰 키: {list(obs.keys())}")
+```
+
+### 조인트 이름 확인
+```bash
+grep "joint name=" tmp/so100_assets/so100.urdf
+```
+
+### 프로세스 관리
+```bash
+ps aux | grep test_so100_mimic_env
+pkill -f test_so100_mimic_env
+```
+
+## 테스트 파일 위치
+- **권장**: `scripts/` 디렉토리 (git에 추가 가능)
+- **비권장**: `scripts/tests/` (`.gitignore`에 의해 무시됨)
+
+## 성능 최적화
+- 환경 수: `num_envs = 1`
+- 헤드리스 모드: `headless=True`
+- 카메라 비활성화: `enable_cameras=False` (카메라가 필요하지 않은 경우)
+description:
+globs:
+alwaysApply: false
+---
+ 
