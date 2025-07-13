@@ -19,19 +19,19 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="assets/Base.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Base.stl"/>
       </geometry>
       <material name="3d_printed"/>
     </visual>
     <visual>
       <geometry>
-        <mesh filename="assets/Base_Motor.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Base_Motor.stl"/>
       </geometry>
       <material name="sts3215"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="assets/Base.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Base.stl"/>
       </geometry>
     </collision>
   </link>
@@ -45,19 +45,19 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="assets/Rotation_Pitch.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Rotation_Pitch.stl"/>
       </geometry>
       <material name="3d_printed"/>
     </visual>
     <visual>
       <geometry>
-        <mesh filename="assets/Rotation_Pitch_Motor.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Rotation_Pitch_Motor.stl"/>
       </geometry>
       <material name="sts3215"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="assets/Rotation_Pitch.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Rotation_Pitch.stl"/>
       </geometry>
     </collision>
   </link>
@@ -71,19 +71,19 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="assets/Upper_Arm.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Upper_Arm.stl"/>
       </geometry>
       <material name="3d_printed"/>
     </visual>
     <visual>
       <geometry>
-        <mesh filename="assets/Upper_Arm_Motor.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Upper_Arm_Motor.stl"/>
       </geometry>
       <material name="sts3215"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="assets/Upper_Arm.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Upper_Arm.stl"/>
       </geometry>
     </collision>
   </link>
@@ -97,19 +97,19 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="assets/Lower_Arm.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Lower_Arm.stl"/>
       </geometry>
       <material name="3d_printed"/>
     </visual>
     <visual>
       <geometry>
-        <mesh filename="assets/Lower_Arm_Motor.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Lower_Arm_Motor.stl"/>
       </geometry>
       <material name="sts3215"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="assets/Lower_Arm.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Lower_Arm.stl"/>
       </geometry>
     </collision>
   </link>
@@ -123,19 +123,19 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="assets/Wrist_Pitch_Roll.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Wrist_Pitch_Roll.stl"/>
       </geometry>
       <material name="3d_printed"/>
     </visual>
     <visual>
       <geometry>
-        <mesh filename="assets/Wrist_Pitch_Roll_Motor.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Wrist_Pitch_Roll_Motor.stl"/>
       </geometry>
       <material name="sts3215"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="assets/Wrist_Pitch_Roll.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Wrist_Pitch_Roll.stl"/>
       </geometry>
     </collision>
   </link>
@@ -149,13 +149,13 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="assets/Fixed_Jaw.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Fixed_Jaw.stl"/>
       </geometry>
       <material name="3d_printed"/>
     </visual>
     <visual>
       <geometry>
-        <mesh filename="assets/Fixed_Jaw_Motor.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Fixed_Jaw_Motor.stl"/>
       </geometry>
       <material name="sts3215"/>
     </visual>
@@ -170,7 +170,7 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="assets/Moving_Jaw.stl"/>
+        <mesh filename="/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets/Moving_Jaw.stl"/>
       </geometry>
       <material name="3d_printed"/>
     </visual>
@@ -178,7 +178,7 @@
 
 
   <!-- Joint from base to shoulder -->
-  <joint name="shoulder_pan" type="revolute">
+  <joint name="shoulder_pan_joint" type="revolute">
     <parent link="base"/>
     <child link="shoulder"/>
     <origin xyz="0 -0.0452 0.0165" rpy="1.57079 0 0"/>
@@ -188,7 +188,7 @@
 
   <transmission name="shoulder_pan_trans">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="shoulder_pan">
+    <joint name="shoulder_pan_joint">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
     <actuator name="motor1">
@@ -198,7 +198,7 @@
   </transmission>
 
   <!-- Joint from shoulder to upper_arm -->
-  <joint name="shoulder_lift" type="revolute">
+  <joint name="shoulder_lift_joint" type="revolute">
     <parent link="shoulder"/>
     <child link="upper_arm"/>
     <origin xyz="0 0.1025 0.0306" rpy="-1.8 0 0"/>
@@ -208,7 +208,7 @@
 
   <transmission name="shoulder_lift_trans">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="shoulder_lift">
+    <joint name="shoulder_lift_joint">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
     <actuator name="motor2">
@@ -218,7 +218,7 @@
   </transmission>
 
   <!-- Joint from upper_arm to lower_arm -->
-  <joint name="elbow_flex" type="revolute">
+  <joint name="elbow_flex_joint" type="revolute">
     <parent link="upper_arm"/>
     <child link="lower_arm"/>
     <origin xyz="0 0.11257 0.028" rpy="1.57079 0 0"/>
@@ -228,7 +228,7 @@
 
   <transmission name="elbow_flex_trans">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="elbow_flex">
+    <joint name="elbow_flex_joint">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
     <actuator name="motor3">
@@ -238,7 +238,7 @@
   </transmission>
 
   <!-- Joint from lower_arm to wrist -->
-  <joint name="wrist_flex" type="revolute">
+  <joint name="wrist_flex_joint" type="revolute">
     <parent link="lower_arm"/>
     <child link="wrist"/>
     <origin xyz="0 0.0052 0.1349" rpy="-1 0 0"/>
@@ -248,7 +248,7 @@
 
   <transmission name="wrist_flex_trans">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="wrist_flex">
+    <joint name="wrist_flex_joint">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
     <actuator name="motor4">
@@ -258,7 +258,7 @@
   </transmission>
 
   <!-- Joint from wrist to gripper -->
-  <joint name="wrist_roll" type="revolute">
+  <joint name="wrist_roll_joint" type="revolute">
     <parent link="wrist"/>
     <child link="gripper"/>
     <origin xyz="0 -0.0601 0" rpy="0 1.57079 0"/>
@@ -268,7 +268,7 @@
 
   <transmission name="wrist_roll_trans">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="wrist_roll">
+    <joint name="wrist_roll_joint">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
     <actuator name="motor5">
@@ -278,7 +278,7 @@
   </transmission>
 
   <!-- Joint from gripper to jaw -->
-  <joint name="gripper" type="revolute">
+  <joint name="gripper_joint" type="revolute">
     <parent link="gripper"/>
     <child link="jaw"/>
     <origin xyz="-0.0202 -0.0244 0" rpy="0 3.14158 0"/>
@@ -288,7 +288,7 @@
 
   <transmission name="gripper_trans">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="gripper">
+    <joint name="gripper_joint">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
     <actuator name="motor6">
