@@ -54,17 +54,17 @@ class SO100CubeStackPinkIKAbsEnvCfg(stack_joint_pos_env_cfg.SO100CubeStackJointP
                                                         joint_vel={".*": 0.0},
                                                     ))
 
-        # Set actions for the specific robot type (franka)
+        # Set actions for the specific robot type (SO100)
         self.actions.arm_action = PinkInverseKinematicsActionCfg(
             pink_controlled_joint_names=[
-                "shoulder_pan_joint",
-                "shoulder_lift_joint",
-                "elbow_flex_joint",
-                "wrist_flex_joint",
-                "wrist_roll_joint",
+                "shoulder_pan",
+                "shoulder_lift",
+                "elbow_flex",
+                "wrist_flex",
+                "wrist_roll",
             ],
             # Joints to be locked in URDF
-            ik_urdf_fixed_joint_names=["gripper_joint"],
+            ik_urdf_fixed_joint_names=["gripper"],
             hand_joint_names=[],
             # the robot in the sim scene we are controlling
             asset_name="robot",

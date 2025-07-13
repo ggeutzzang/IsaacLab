@@ -102,12 +102,12 @@ class SO100CubeStackPinkIKAbsVisuomotorEnvCfg(stack_joint_pos_env_cfg.SO100CubeS
                 rot=(0.7071, 0, 0, 0.7071),
                 joint_pos={
                     # SO100 joints
-                    "shoulder_pan_joint": 0.0,
-                    "shoulder_lift_joint": 1.5708,
-                    "elbow_flex_joint": -1.5708,
-                    "wrist_flex_joint": 1.2,
-                    "wrist_roll_joint": 0.0,
-                    "gripper_joint": 0.0,
+                    "shoulder_pan": 0.0,
+                    "shoulder_lift": 1.5708,
+                    "elbow_flex": -1.5708,
+                    "wrist_flex": 1.2,
+                    "wrist_roll": 0.0,
+                    "gripper": 0.0,
                 },
                 joint_vel={".*": 0.0},
             ),
@@ -116,14 +116,14 @@ class SO100CubeStackPinkIKAbsVisuomotorEnvCfg(stack_joint_pos_env_cfg.SO100CubeS
         # Set actions for the specific robot type (SO100)
         self.actions.arm_action = PinkInverseKinematicsActionCfg(
             pink_controlled_joint_names=[
-                "shoulder_pan_joint",
-                "shoulder_lift_joint",
-                "elbow_flex_joint",
-                "wrist_flex_joint",
-                "wrist_roll_joint",
+                "shoulder_pan",
+                "shoulder_lift",
+                "elbow_flex",
+                "wrist_flex",
+                "wrist_roll",
             ],
             # Joints to be locked in URDF
-            ik_urdf_fixed_joint_names=["gripper_joint"],
+            ik_urdf_fixed_joint_names=["gripper"],
             hand_joint_names=[],
             # the robot in the sim scene we are controlling
             asset_name="robot",
