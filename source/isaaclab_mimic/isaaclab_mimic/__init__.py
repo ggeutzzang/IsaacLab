@@ -6,3 +6,6 @@
 """Package containing implementation of Isaac Lab Mimic data generation."""
 
 __version__ = "1.0.0"
+
+# Import envs to register environments
+import isaaclab_mimic.envs  # noqa: F401

@@ -53,3 +53,7 @@ gym.register(
     },
     disable_env_checker=True,
 )
+
+
+# Import pinocchio_envs to register SO100 environments
+import isaaclab_mimic.envs.pinocchio_envs  # noqa: F401
