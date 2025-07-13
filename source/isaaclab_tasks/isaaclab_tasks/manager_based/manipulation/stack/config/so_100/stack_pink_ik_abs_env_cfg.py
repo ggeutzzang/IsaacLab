@@ -29,12 +29,17 @@ class SO100CubeStackPinkIKAbsEnvCfg(stack_joint_pos_env_cfg.SO100CubeStackJointP
         # post init of parent
         super().__post_init__()
 
-        # Temporary directory for URDF files
-        self.temp_urdf_dir = tempfile.gettempdir()
-        # Convert USD to URDF and change revolute joints to fixed
-        temp_urdf_output_path, temp_urdf_meshes_output_path = ControllerUtils.convert_usd_to_urdf(
-            self.scene.robot.spawn.usd_path, self.temp_urdf_dir, force_conversion=True
-        )
+        # # Temporary directory for URDF files
+        # self.temp_urdf_dir = tempfile.gettempdir()
+        # # Convert USD to URDF and change revolute joints to fixed
+        # temp_urdf_output_path, temp_urdf_meshes_output_path = ControllerUtils.convert_usd_to_urdf(
+        #     self.scene.robot.spawn.usd_path, self.temp_urdf_dir, force_conversion=True
+        # )
+
+        # 기존 URDF 파일과 메시 디렉토리 직접 사용
+        urdf_path = "/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/so100.urdf"
+        mesh_path = "/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets"
+
 
         # Set Franka as robot
         # We switch here to a stiffer PD controller for IK tracking to be better.
@@ -57,14 +62,14 @@ class SO100CubeStackPinkIKAbsEnvCfg(stack_joint_pos_env_cfg.SO100CubeStackJointP
         # Set actions for the specific robot type (SO100)
         self.actions.arm_action = PinkInverseKinematicsActionCfg(
             pink_controlled_joint_names=[
-                "shoulder_pan",
-                "shoulder_lift",
-                "elbow_flex",
-                "wrist_flex",
-                "wrist_roll",
+                "shoulder_pan_joint",
+                "shoulder_lift_joint",
+                "elbow_flex_joint",
+                "wrist_flex_joint",
+                "wrist_roll_joint",
             ],
             # Joints to be locked in URDF
-            ik_urdf_fixed_joint_names=["gripper"],
+            ik_urdf_fixed_joint_names=["gripper_joint"],
             hand_joint_names=[],
             # the robot in the sim scene we are controlling
             asset_name="robot",

@@ -72,8 +72,9 @@ def test_so100_mimic_env():
         # 랜덤 행동으로 몇 스텝 실행
         print(f"\n=== 랜덤 행동 테스트 ===")
         for step in range(5):
-            # 랜덤 행동 생성
-            action = env.action_space.sample()
+            # 랜덤 행동 생성 (numpy array를 tensor로 변환)
+            action_numpy = env.action_space.sample()
+            action = torch.tensor(action_numpy, dtype=torch.float32)
             print(f"스텝 {step + 1}: 행동 shape = {action.shape}")
             
             # 환경 스텝 실행

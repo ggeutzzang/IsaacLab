@@ -86,12 +86,9 @@ class SO100CubeStackPinkIKAbsVisuomotorEnvCfg(stack_joint_pos_env_cfg.SO100CubeS
         # post init of parent
         super().__post_init__()
 
-        # Temporary directory for URDF files
-        self.temp_urdf_dir = tempfile.gettempdir()
-        # Convert USD to URDF and change revolute joints to fixed
-        temp_urdf_output_path, temp_urdf_meshes_output_path = ControllerUtils.convert_usd_to_urdf(
-            self.scene.robot.spawn.usd_path, self.temp_urdf_dir, force_conversion=True
-        )
+        # 기존 URDF 파일과 메시 디렉토리 직접 사용
+        urdf_path = "/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/so100.urdf"
+        mesh_path = "/home/iamhjoo/myprojects/IsaacLab/tmp/so100_assets/assets"
 
         # Set SO100 as robot
         # We switch here to a stiffer PD controller for IK tracking to be better.
@@ -102,12 +99,12 @@ class SO100CubeStackPinkIKAbsVisuomotorEnvCfg(stack_joint_pos_env_cfg.SO100CubeS
                 rot=(0.7071, 0, 0, 0.7071),
                 joint_pos={
                     # SO100 joints
-                    "shoulder_pan": 0.0,
-                    "shoulder_lift": 1.5708,
-                    "elbow_flex": -1.5708,
-                    "wrist_flex": 1.2,
-                    "wrist_roll": 0.0,
-                    "gripper": 0.0,
+                    "shoulder_pan_joint": 0.0,
+                    "shoulder_lift_joint": 1.5708,
+                    "elbow_flex_joint": -1.5708,
+                    "wrist_flex_joint": 1.2,
+                    "wrist_roll_joint": 0.0,
+                    "gripper_joint": 0.0,
                 },
                 joint_vel={".*": 0.0},
             ),
@@ -116,14 +113,15 @@ class SO100CubeStackPinkIKAbsVisuomotorEnvCfg(stack_joint_pos_env_cfg.SO100CubeS
         # Set actions for the specific robot type (SO100)
         self.actions.arm_action = PinkInverseKinematicsActionCfg(
             pink_controlled_joint_names=[
-                "shoulder_pan",
-                "shoulder_lift",
-                "elbow_flex",
-                "wrist_flex",
-                "wrist_roll",
+                "shoulder_pan_joint",
+                "shoulder_lift_joint",
+                "elbow_flex_joint",
+                "wrist_flex_joint",
+                "wrist_roll_joint",
+                "gripper_joint",  # 추가
             ],
             # Joints to be locked in URDF
-            ik_urdf_fixed_joint_names=["gripper"],
+            ik_urdf_fixed_joint_names=["gripper_joint"],
             hand_joint_names=[],
             # the robot in the sim scene we are controlling
             asset_name="robot",
@@ -147,13 +145,10 @@ class SO100CubeStackPinkIKAbsVisuomotorEnvCfg(stack_joint_pos_env_cfg.SO100CubeS
                 fixed_input_tasks=[],
             ),
         )
-        ControllerUtils.change_revolute_to_fixed(
-            temp_urdf_output_path, self.actions.arm_action.ik_urdf_fixed_joint_names
-        )
 
         # Set the URDF and mesh paths for the IK controller
-        self.actions.arm_action.controller.urdf_path = temp_urdf_output_path
-        self.actions.arm_action.controller.mesh_path = temp_urdf_meshes_output_path
+        self.actions.arm_action.controller.urdf_path = urdf_path
+        self.actions.arm_action.controller.mesh_path = mesh_path
 
         # # Set wrist camera
         # self.scene.wrist_cam = CameraCfg(
