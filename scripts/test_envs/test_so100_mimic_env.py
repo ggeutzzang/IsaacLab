@@ -35,7 +35,7 @@ def test_so100_mimic_env():
         
         # 환경 생성 (cfg 인자 전달)
         env = gym.make(env_id, cfg=env_cfg)
-        print("환경 생성 성공")
+        print("✅ 환경 생성 성공")
         
         # 환경 정보 출력
         print(f"\n=== 환경 정보 ===")
@@ -67,7 +67,6 @@ def test_so100_mimic_env():
         action_space = env.action_space
         print(f"행동 차원: {action_space.shape}")
         print(f"행동 타입: {action_space.dtype}")
-        # 행동 공간 타입 정보 출력
         print(f"행동 공간 타입: {type(action_space)}")
         
         # 랜덤 행동으로 몇 스텝 실행
@@ -99,75 +98,9 @@ def test_so100_mimic_env():
         traceback.print_exc()
 
 
-def test_so100_mimic_env_with_demo():
-    """데모 데이터와 함께 SO-100 Mimic 환경을 테스트합니다."""
-    
-    print("\n=== SO-100 Mimic 환경 데모 테스트 시작 ===")
-    
-    env_id = "Isaac-Stack-SO100-Abs-Mimic-v0"
-    
-    try:
-        # 환경 설정 파싱
-        env_cfg = parse_env_cfg(env_id)
-        
-        # 환경 수를 1개로 설정
-        env_cfg.scene.num_envs = 1
-        
-        # 환경 생성 (cfg 인자 전달)
-        env = gym.make(env_id, cfg=env_cfg)
-        print("✅ 환경 생성 성공")
-        
-        # 환경 리셋
-        obs, info = env.reset()
-        
-        # 데모 정보 확인
-        if 'demo_info' in info:
-            print(f"\n=== 데모 정보 ===")
-            demo_info = info['demo_info']
-            print(f"데모 키: {list(demo_info.keys())}")
-            
-            # 데모 데이터 구조 확인
-            for key, value in demo_info.items():
-                if isinstance(value, torch.Tensor):
-                    print(f"  {key}: {value.shape} ({value.dtype})")
-                elif isinstance(value, dict):
-                    print(f"  {key}:")
-                    for sub_key, sub_value in value.items():
-                        if isinstance(sub_value, torch.Tensor):
-                            print(f"    {sub_key}: {sub_value.shape}")
-                        else:
-                            print(f"    {sub_key}: {type(sub_value)}")
-                else:
-                    print(f"  {key}: {type(value)}")
-        
-        # 서브태스크 정보 확인
-        if 'subtask_info' in info:
-            print(f"\n=== 서브태스크 정보 ===")
-            subtask_info = info['subtask_info']
-            print(f"서브태스크 키: {list(subtask_info.keys())}")
-            
-            for key, value in subtask_info.items():
-                if isinstance(value, torch.Tensor):
-                    print(f"  {key}: {value.shape}")
-                else:
-                    print(f"  {key}: {type(value)}")
-        
-        # 환경 종료
-        env.close()
-        print("\n✅ 데모 테스트 완료")
-        
-    except Exception as e:
-        print(f"❌ 데모 테스트 중 오류 발생: {e}")
-        import traceback
-        traceback.print_exc()
-
-
 if __name__ == "__main__":
-    # 기본 환경 테스트
+    # Mimic 환경 테스트만 실행
     test_so100_mimic_env()
     
-    # 데모 데이터 테스트
-    test_so100_mimic_env_with_demo()
-    
-    print("\n=== 모든 테스트 완료 ===")
+    print("\n=== 테스트 완료 ===")
     simulation_app.close() 
