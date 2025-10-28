@@ -133,8 +133,8 @@ def copysign(mag: float, other: torch.Tensor) -> torch.Tensor:
     Returns:
         The output tensor.
     """
-    mag_torch = torch.tensor(mag, device=other.device, dtype=torch.float).repeat(other.shape[0])
-    return torch.abs(mag_torch) * torch.sign(other)
+    mag_torch = abs(mag) * torch.ones_like(other)
+    return torch.copysign(mag_torch, other)
 
 
 """
@@ -250,7 +250,7 @@ def quat_conjugate(q: torch.Tensor) -> torch.Tensor:
     """
     shape = q.shape
     q = q.reshape(-1, 4)
-    return torch.cat((q[:, 0:1], -q[:, 1:]), dim=-1).view(shape)
+    return torch.cat((q[..., 0:1], -q[..., 1:]), dim=-1).view(shape)
 
 
 @torch.jit.script
@@ -401,7 +401,7 @@ def _axis_angle_rotation(axis: Literal["X", "Y", "Z"], angle: torch.Tensor) -> t
 
 def matrix_from_euler(euler_angles: torch.Tensor, convention: str) -> torch.Tensor:
     """
-    Convert rotations given as Euler angles in radians to rotation matrices.
+    Convert rotations given as Euler angles (intrinsic) in radians to rotation matrices.
 
     Args:
         euler_angles: Euler angles in radians. Shape is (..., 3).
@@ -436,7 +436,7 @@ def euler_xyz_from_quat(
     """Convert rotations given as quaternions to Euler angles in radians.
 
     Note:
-        The euler angles are assumed in XYZ convention.
+        The euler angles are assumed in XYZ extrinsic convention.
 
     Args:
         quat: The quaternion orientation in (w, x, y, z). Shape is (N, 4).
@@ -682,6 +682,7 @@ def quat_apply_yaw(quat: torch.Tensor, vec: torch.Tensor) -> torch.Tensor:
 
 def quat_rotate(q: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
     """Rotate a vector by a quaternion along the last dimension of q and v.
+
     .. deprecated v2.1.0:
          This function will be removed in a future release in favor of the faster implementation :meth:`quat_apply`.
 
@@ -705,6 +706,7 @@ def quat_rotate_inverse(q: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
 
     .. deprecated v2.1.0:
          This function will be removed in a future release in favor of the faster implementation :meth:`quat_apply_inverse`.
+
     Args:
         q: The quaternion in (w, x, y, z). Shape is (..., 4).
         v: The vector in (x, y, z). Shape is (..., 3).
