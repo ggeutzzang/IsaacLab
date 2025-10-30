@@ -6,28 +6,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Isaac Lab**은 NVIDIA Isaac Sim 기반의 GPU 가속 로봇 학습 프레임워크입니다. 강화학습(RL), 모방학습(IL), 모션 플래닝 등의 워크플로우를 통합하며, 벡터화된 환경과 정확한 물리/센서 시뮬레이션을 제공합니다.
 
-- **버전:** 2.1.0 (Isaac Sim 4.5 호환)
-- **Python:** 3.10+
+- **버전:** 2.2.1 (Isaac Sim 4.5 / 5.0 호환)
+- **Python:** 3.10+ (3.11 권장)
+- **PyTorch:** 2.7.0+cu128
 - **라이선스:** BSD-3-Clause (메인), Apache-2.0 (isaaclab_mimic)
 
 ## 환경 설정 및 빌드
 
-### 초기 설정
+### 초기 설정 (v2.2.1) - 권장 방법
+
+**중요:** Isaac Lab v2.2.1은 환경 이름을 `env_isaaclab`로 사용하는 것을 권장합니다.
+
 ```bash
 # 1. Conda 환경 생성 및 활성화
-conda create -n env_isaaclab python=3.10
+conda create -n env_isaaclab python=3.11
 conda activate env_isaaclab
 
-# 2. PyTorch 설치 (CUDA 11.8 또는 12.1)
-pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu118
+# 2. PyTorch 설치 (CUDA 12.8)
+pip install torch==2.7.0 torchvision==0.22.0 --index-url https://download.pytorch.org/whl/cu128
 
-# 3. Isaac Sim 설치
-pip install 'isaacsim[all,extscache]==4.5.0' --extra-index-url https://pypi.nvidia.com
+# 3. Isaac Sim 5.0 설치 (약 4.5GB 다운로드, 10-15분 소요)
+pip install 'isaacsim[all,extscache]==5.0.0' --extra-index-url https://pypi.nvidia.com
 
 # 4. Isaac Lab 설치
 ./isaaclab.sh --install  # Linux
 # or
 isaaclab.bat --install   # Windows
+
+# 5. 호환성 문제 해결 (필수!)
+pip install "scipy==1.11.4"  # SciPy 1.15.3 → 1.11.4 다운그레이드
+conda config --env --set channel_priority strict
+conda config --env --add channels conda-forge
+conda install -y -c conda-forge "libstdcxx-ng>=12" "libgcc-ng>=12"  # GLIBCXX 3.4.30 지원
+```
+
+**환경 이름 참고:**
+- Isaac Lab은 기본적으로 `env_isaaclab` 환경을 찾습니다
+- `isaaclab.sh` 스크립트는 자동으로 올바른 Python 경로를 찾아 사용합니다
+- 다른 이름을 사용하면 Python 경로 문제가 발생할 수 있습니다
+
+**주의:** Isaac Sim 4.5를 사용하려면:
+```bash
+# Python 3.10 환경 사용
+conda create -n isaaclab_4_5 python=3.10
+# PyTorch 2.5.1 설치
+pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu118
+# Isaac Sim 4.5 설치
+pip install 'isaacsim[all,extscache]==4.5.0' --extra-index-url https://pypi.nvidia.com
 ```
 
 ### 공통 개발 명령어
@@ -121,19 +146,46 @@ make multi-docs
 - `DirectRLEnv`, `DirectMARLEnv` 사용
 - PyTorch JIT, Warp로 최적화 가능
 
-### 2. 설정 기반 아키텍처
+### 2. 설정 기반 아키텍처 (Configuration-Driven Architecture)
 
-모든 환경은 `@configclass` 데코레이터로 정의된 설정 클래스 사용:
+**핵심 설계 철학:**
+Isaac Lab의 개발은 **~Cfg 클래스 정의가 80%**를 차지합니다. 모든 컴포넌트는 설정(Configuration)과 실행(Runtime)이 분리된 이중 레이어 구조로 설계되었습니다.
+
+```
+Configuration Layer (~Cfg 클래스)     Runtime Layer (실행 클래스)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━     ━━━━━━━━━━━━━━━━━━━━━━
+InteractiveSceneCfg          →    InteractiveScene
+ArticulationCfg              →    Articulation
+ActionsCfg                   →    ActionManager
+ObservationsCfg              →    ObservationManager
+RewardsCfg                   →    RewardManager
+```
+
+**작명 규칙:** `{Component}Cfg` → `{Component}` 또는 `{Component}Manager`
+
+**기본 환경 설정 예시:**
 ```python
 @configclass
-class MyEnvCfg:
+class MyEnvCfg(ManagerBasedEnvCfg):
+    """사용자는 '무엇을' 만들지 선언 (선언적 프로그래밍)"""
     viewer: ViewerCfg = ViewerCfg()
     sim: SimulationCfg = SimulationCfg()
     scene: InteractiveSceneCfg = InteractiveSceneCfg()
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
-    # ... 기타 매니저 설정
+    rewards: RewardsCfg = RewardsCfg()
+    terminations: TerminationsCfg = TerminationsCfg()
+    events: EventsCfg = EventsCfg()
+
+# 프레임워크가 자동으로 '어떻게' 실행할지 처리
+env = ManagerBasedEnv(MyEnvCfg())  # 이 한 줄에서 모든 초기화 발생
 ```
+
+**장점:**
+- **타입 안전성**: Python 타입 시스템 + IDE 자동완성
+- **재사용성**: 상속과 조합으로 쉽게 확장
+- **가독성**: 복잡한 환경을 계층적 설정 구조로 표현
+- **버전 관리**: 모든 설정이 코드이므로 Git으로 추적 가능
 
 ### 3. 프로젝트 구조
 
@@ -173,7 +225,65 @@ scripts/
 gym.make("Isaac-Velocity-Rough-Anymal-C-v0")
 gym.make("Isaac-Lift-Cube-Franka-v0")
 gym.make("Isaac-Ant-v0")
+gym.make("Isaac-PickPlace-GR1T2-Abs-v0")
 ```
+
+#### 주요 로봇별 환경 예시
+
+**휴머노이드 로봇 (GR1T2 - Fourier Intelligence)**
+
+Isaac Lab은 Fourier Intelligence의 GR1T2 휴머노이드 로봇을 지원합니다 (54 DOF).
+
+| 환경 ID | 작업 | 제어 방식 | 설명 |
+|---------|------|----------|------|
+| `Isaac-PickPlace-GR1T2-Abs-v0` | Pick & Place | Pink IK | 스티어링 휠 픽앤플레이스 작업 |
+| `Isaac-PickPlace-GR1T2-WaistEnabled-Abs-v0` | Pick & Place | Pink IK | 허리 관절 활용 버전 |
+| `Isaac-NutPour-GR1T2-Pink-IK-Abs-v0` | Nut Pouring | Pink IK | 견과류 붓기 작업 |
+| `Isaac-ExhaustPipe-GR1T2-Pink-IK-Abs-v0` | Exhaust Pipe | Pink IK | 배기관 조립 작업 |
+
+**실행 예시:**
+```bash
+# 키보드 텔레조작 (Pink IK 컨트롤러 사용)
+./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py \
+    --task Isaac-PickPlace-GR1T2-Abs-v0 \
+    --teleop_device keyboard \
+    --enable_pinocchio
+
+# VR 핸드 트래킹
+./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py \
+    --task Isaac-PickPlace-GR1T2-Abs-v0 \
+    --teleop_device handtracking \
+    --enable_pinocchio
+
+# 시연 데이터 기록 (RoboMimic 학습용)
+./isaaclab.sh -p scripts/tools/record_demos.py \
+    --task Isaac-PickPlace-GR1T2-Abs-v0 \
+    --num_demos 100 \
+    --enable_pinocchio
+```
+
+**중요**: GR1T2 환경은 **Pink Inverse Kinematics** 컨트롤러를 사용하므로 `--enable_pinocchio` 플래그가 필수입니다.
+
+**GR1T2 로봇 구성:**
+- **총 DOF**: 54개 (머리 3 + 허리 3 + 다리 12 + 팔 14 + 손 22)
+- **제어 방식**: Pink IK (엔드 이펙터 목표 → 조인트 각도 자동 계산)
+- **액션 공간**: 왼팔/오른팔 위치(3) + 자세(4) + 손가락 조인트(11×2) = 32차원
+- **로봇 설정**: `source/isaaclab_assets/isaaclab_assets/robots/fourier.py`
+- **환경 설정**: `source/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/pick_place/`
+
+**조작 로봇 (Franka Emika Panda)**
+
+| 환경 ID | 작업 | 설명 |
+|---------|------|------|
+| `Isaac-Lift-Cube-Franka-v0` | Lifting | 큐브 들어올리기 |
+| `Isaac-Reach-Franka-v0` | Reaching | 목표 지점 도달 |
+
+**사족 보행 로봇 (ANYmal-C)**
+
+| 환경 ID | 작업 | 설명 |
+|---------|------|------|
+| `Isaac-Velocity-Rough-Anymal-C-v0` | Locomotion | 거친 지형 주행 |
+| `Isaac-Velocity-Flat-Anymal-C-v0` | Locomotion | 평평한 지형 주행 |
 
 ### 5. 관찰값 구조
 
@@ -184,6 +294,131 @@ VecEnvObs = Dict[str, torch.Tensor | Dict[str, torch.Tensor]]
 ```
 
 ## 개발 가이드라인
+
+### 코드 분석 가이드라인 (Claude Code 전용)
+
+Isaac Lab 코드를 분석하거나 수정할 때는 **Configuration-Driven Architecture** 관점을 항상 유지하세요.
+
+#### 1. 코드 분석 시 필수 확인 사항
+
+**모든 코드 분석 시 다음 구조를 먼저 파악:**
+
+```
+1. Configuration Layer (~Cfg 클래스)
+   - 어떤 설정 클래스들이 정의되어 있는가?
+   - 각 설정 클래스의 계층 구조는?
+   - 기본값과 필수값(MISSING)은 무엇인가?
+
+2. Runtime Layer (실행 클래스)
+   - Cfg 클래스를 받아서 어떻게 초기화하는가?
+   - 어떤 Manager들이 생성되는가?
+   - 실제 실행 로직은 어디에 있는가?
+
+3. MDP 함수 (isaaclab/envs/mdp/)
+   - 관찰값, 보상, 종료 조건 함수는 어디에 정의되어 있는가?
+   - 어떤 SceneEntityCfg를 사용하는가?
+```
+
+#### 2. 코드 설명 시 포함할 내용
+
+**파일 분석 시 항상 다음 순서로 설명:**
+
+1. **Configuration Layer 설명**
+   ```python
+   @configclass
+   class SomeCfg:  # ← 이것이 무엇을 설정하는지
+       param1 = ...  # ← 각 파라미터의 의미
+   ```
+
+2. **Runtime Layer 연결**
+   ```python
+   # SomeCfg → SomeManager 또는 Some 클래스로 변환
+   some_instance = Some(SomeCfg())
+   ```
+
+3. **실행 흐름**
+   - 사용자가 Cfg 정의 → 프레임워크가 자동 실행
+   - 어떤 Manager가 생성되고 어떤 순서로 실행되는지
+
+4. **재사용성과 확장성**
+   - 이 설정 클래스를 어떻게 상속/조합하여 확장할 수 있는지
+   - `replace()` 메서드로 어떻게 변형할 수 있는지
+
+#### 3. 코드 수정 시 원칙
+
+**항상 Configuration Layer를 먼저 수정:**
+
+```python
+# ✅ 올바른 순서
+# 1단계: Cfg 클래스 수정/생성
+@configclass
+class NewFeatureCfg:
+    param = default_value
+
+# 2단계: 기존 Cfg에 통합
+@configclass
+class EnvCfg(ManagerBasedEnvCfg):
+    new_feature: NewFeatureCfg = NewFeatureCfg()
+
+# 3단계: 필요한 경우에만 Runtime 로직 수정
+class NewFeatureManager:
+    def __init__(self, cfg: NewFeatureCfg):
+        # Cfg 기반 초기화
+```
+
+**❌ 피해야 할 패턴:**
+```python
+# Runtime 클래스에 직접 하드코딩
+class SomeManager:
+    def __init__(self):
+        self.value = 10  # ❌ Cfg로 설정 가능해야 함!
+```
+
+#### 4. 파일 참조 시 작명 규칙 준수
+
+**Cfg 패턴 인식:**
+- `{Component}Cfg` → Configuration Layer
+- `{Component}` 또는 `{Component}Manager` → Runtime Layer
+- `mdp.{function_name}` → MDP 함수 (재사용 가능한 관찰/보상/종료 함수)
+
+**예시:**
+```python
+# Configuration
+ArticulationCfg          → 로봇 설정
+ActionsCfg              → 액션 설정
+ObservationsCfg         → 관찰값 설정
+
+# Runtime
+Articulation            → 실제 로봇 객체
+ActionManager           → 액션 처리 매니저
+ObservationManager      → 관찰값 처리 매니저
+
+# MDP Functions
+mdp.joint_pos_rel       → 관절 위치 관찰 함수
+mdp.is_terminated       → 종료 조건 함수
+```
+
+#### 5. 새 기능 추가 시 체크리스트
+
+```markdown
+- [ ] Cfg 클래스 정의 완료
+- [ ] @configclass 데코레이터 적용
+- [ ] 기본값 또는 MISSING 지정
+- [ ] 타입 힌팅 추가 (선택사항이지만 권장)
+- [ ] 상위 EnvCfg에 통합
+- [ ] Runtime 클래스가 Cfg를 받도록 구현
+- [ ] to_dict(), replace() 등 configclass 메서드 활용 가능 확인
+- [ ] 재사용성을 위해 상속 구조 고려
+```
+
+#### 6. 디버깅 시 우선순위
+
+**문제 발생 시 다음 순서로 확인:**
+
+1. **Cfg 검증**: `env_cfg.validate()` - MISSING 값 확인
+2. **Cfg 내용 확인**: `env_cfg.to_dict()` - 전체 설정 출력
+3. **Manager 초기화 로그**: 각 Manager가 어떤 Cfg를 받았는지
+4. **MDP 함수 실행**: 관찰/보상 함수가 올바른 값을 반환하는지
 
 ### Import 정렬 순서 (isort)
 
@@ -275,15 +510,157 @@ Ray RLlib을 사용한 분산 학습 지원 (docs/deployment/ 참조).
 
 ## 주요 의존성
 
-| 패키지 | 버전 | 용도 |
-|--------|------|------|
-| PyTorch | 2.5.1 | 신경망, 텐서 연산 |
-| Gymnasium | >=1.0 | RL 환경 API |
-| NumPy | <2 | 수치 계산 |
-| ONNX | 1.16.1 | 모델 변환 |
-| Warp | warp-lang | GPU 커널 최적화 |
+| 패키지 | 버전 | 용도 | 비고 |
+|--------|------|------|------|
+| PyTorch | 2.7.0+cu128 | 신경망, 텐서 연산 (CUDA 12.8) | |
+| Gymnasium | >=1.0 | RL 환경 API | |
+| NumPy | 1.26.0 | 수치 계산 | **<2.0 제약** (Isaac Sim 호환성) |
+| SciPy | 1.11.4 | 과학 계산 | **1.15.3에서 다운그레이드 필수** |
+| ONNX | 1.16.1 | 모델 변환 | |
+| Warp | warp-lang | GPU 커널 최적화 | |
+| libstdcxx-ng | >=12 (15.2.0) | C++ 표준 라이브러리 | GLIBCXX_3.4.30+ 지원 |
 
 ## 문제 해결
+
+### ⚠️ SciPy/NumPy 호환성 에러 (Critical)
+
+**증상:**
+```
+ValueError: All ufuncs must have type `numpy.ufunc`.
+Received (<ufunc 'sph_legendre_p'>, ...)
+```
+
+**영향을 받는 모듈:**
+- `isaacsim.replicator.grasping`
+- `isaacsim.util.camera_inspector`
+- `isaacsim.ros2.bridge`
+
+**원인:**
+- Isaac Sim 5.0이 SciPy 1.15.3을 설치하지만, 이 버전은 NumPy 2.x 전환용
+- NumPy 1.26.0과 호환되지 않아 ufunc 타입 검사 실패
+
+**해결:**
+```bash
+pip install "scipy==1.11.4"
+```
+
+**검증:**
+```bash
+python -c "import scipy; print(scipy.__version__)"  # 1.11.4 출력되어야 함
+```
+
+**참고:** `isaacsim-core`가 scipy==1.15.3을 요구한다는 경고가 나타나지만 무시해도 됨. 1.11.4가 실제로 더 안정적.
+
+---
+
+### ⚠️ 의존성 충돌 경고
+
+설치 중 다음과 같은 의존성 충돌 경고가 나타날 수 있습니다:
+
+```
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed.
+isaacsim-kernel 5.0.0.0 requires sentry-sdk==1.43.0, but you have sentry-sdk 2.42.1
+```
+
+**영향:**
+- 대부분의 경우 실제 동작에는 문제가 없습니다
+- Isaac Lab의 RL 라이브러리들이 더 최신 버전의 sentry-sdk를 요구합니다
+- Isaac Sim의 에러 리포팅 기능에만 영향을 줄 수 있습니다
+
+**해결 (선택사항):**
+```bash
+# 1. Isaac Sim 기능 우선 (에러 리포팅 필요 시)
+pip install "sentry-sdk==1.43.0"
+
+# 2. Isaac Lab 기능 우선 (RL 학습 안정성 우선)
+# 현재 상태 유지 (권장)
+```
+
+**권장:** 실제 학습/시뮬레이션에 문제가 없다면 현재 상태 유지를 권장합니다.
+
+---
+
+### ⚠️ GLIBCXX_3.4.30 에러 (Critical)
+
+**증상:**
+```
+OSError: version 'GLIBCXX_3.4.30' not found
+(required by /path/to/omni/libcarb.so)
+```
+
+**원인:**
+- Isaac Sim 네이티브 라이브러리(`libcarb.so`)가 GLIBCXX_3.4.30 (GCC 12+) 필요
+- Conda 환경의 기본 libstdc++는 GLIBCXX_3.4.29 (GCC 11)까지만 지원
+- torch 또는 tensorboard를 `AppLauncher` 전에 import하면 발생
+
+**해결 방법 1: C++ 라이브러리 업그레이드 (권장)**
+
+```bash
+conda config --env --set channel_priority strict
+conda config --env --add channels conda-forge
+conda install -y -c conda-forge "libstdcxx-ng>=12" "libgcc-ng>=12"
+```
+
+**검증:**
+```bash
+strings $CONDA_PREFIX/lib/libstdc++.so.6 | grep "^GLIBCXX" | sort -V | tail -1
+# GLIBCXX_3.4.34 (또는 3.4.30 이상) 출력되어야 함
+```
+
+**해결 방법 2: Import 순서 변경**
+
+```python
+# ❌ 잘못된 순서
+import torch
+from isaaclab.app import AppLauncher
+
+# ✅ 올바른 순서
+from isaaclab.app import AppLauncher
+app_launcher = AppLauncher(args)
+simulation_app = app_launcher.app
+# AppLauncher 생성 후 torch import
+import torch
+```
+
+**공식 문서 참조:**
+- `docs/source/refs/issues.rst` (96-104줄): Known Issues
+- `docs/source/overview/imitation-learning/skillgen.rst` (113-119줄): SkillGen 설치
+
+---
+
+### ⚠️ Python 경로 문제 (환경 이름)
+
+**증상:**
+```
+[ERROR] Unable to find any Python executable at path: '/path/to/conda/envs/CUSTOM_NAME/bin/python'
+```
+
+**원인:**
+- Isaac Lab의 `isaaclab.sh` 스크립트는 특정 환경 이름을 우선 순위로 검색합니다
+- 기본 우선순위: `env_isaaclab` > `isaaclab` > 기타
+
+**해결:**
+```bash
+# 방법 1: 권장 환경 이름 사용 (권장)
+conda create -n env_isaaclab python=3.11
+conda activate env_isaaclab
+
+# 방법 2: 심볼릭 링크 생성 (기존 환경 유지하려는 경우)
+cd $HOME/miniconda3/envs
+ln -s your_custom_env env_isaaclab
+
+# 방법 3: Python 경로 직접 지정
+export PYTHON_EXECUTABLE="$CONDA_PREFIX/bin/python"
+./isaaclab.sh --install
+```
+
+**검증:**
+```bash
+conda activate env_isaaclab
+./isaaclab.sh -p --version  # Python 버전 확인
+```
+
+---
 
 ### Isaac Sim 경로 오류
 ```bash
@@ -305,6 +682,44 @@ conda activate env_isaaclab
 --headless
 ```
 
+### 설치 검증
+
+Isaac Lab이 정상적으로 설치되었는지 확인:
+
+```bash
+# 1. Conda 환경 활성화 확인
+conda activate env_isaaclab
+which python  # /home/USERNAME/miniconda3/envs/env_isaaclab/bin/python
+
+# 2. 패키지 버전 확인
+pip list | grep -E "(isaaclab|scipy|numpy|torch)"
+# NumPy: 1.26.0
+# SciPy: 1.11.4 (중요!)
+# torch: 2.7.0+cu128
+# isaaclab: 0.47.2
+# isaaclab-assets: 0.2.2
+# isaaclab-mimic: 1.0.14
+# isaaclab-rl: 0.4.2
+# isaaclab-tasks: 0.11.1
+
+# 3. C++ 라이브러리 확인 (GLIBCXX 3.4.30+ 필요)
+strings $CONDA_PREFIX/lib/libstdc++.so.6 | grep "^GLIBCXX" | sort -V | tail -1
+# GLIBCXX_3.4.30 이상 출력되어야 함
+
+# 4. 환경 목록 실행 (가벼운 테스트)
+./isaaclab.sh -p scripts/environments/list_envs.py
+# 200+ 환경이 에러 없이 표시되어야 함
+
+# 5. 간단한 시뮬레이션 실행 (헤드리스 모드)
+./isaaclab.sh -p scripts/tutorials/00_sim/create_empty.py --headless
+# 성공하면 "Simulation App Startup Complete" 메시지 출력
+```
+
+**주의사항:**
+- SciPy 버전이 1.15.3이면 반드시 1.11.4로 다운그레이드 필요
+- GLIBCXX 버전이 3.4.30 미만이면 libstdcxx-ng 업그레이드 필요
+- 첫 실행 시 shader 컴파일로 인해 시간이 걸릴 수 있음
+
 ## 리소스
 
 - **문서:** https://isaac-sim.github.io/IsaacLab
@@ -324,3 +739,24 @@ Isaac Lab은 원래 Orbit 프레임워크에서 시작되었습니다:
    year={2023}
 }
 ```
+
+---
+
+## 변경 이력
+
+- **2025-10-28 (업데이트 2)**: 환경 설정 실전 경험 반영
+  - 권장 Conda 환경 이름을 `env_isaaclab`로 명시
+  - Python 경로 문제 해결 방법 추가 (3가지 방법)
+  - 설치 검증 섹션 강화 (5단계 체크리스트)
+  - Isaac Sim 5.0 설치 소요 시간 정보 추가
+  - 패키지 버전 목록 업데이트 (실제 설치 버전 기준)
+
+- **2025-10-28 (업데이트 1)**: SciPy/GLIBCXX 호환성 문제 해결 방법 추가
+  - 초기 설정에 호환성 문제 해결 단계 추가 (5단계)
+  - 주요 의존성 테이블에 SciPy 1.11.4 및 libstdcxx-ng 추가
+  - 문제 해결 섹션에 SciPy/NumPy 호환성 에러 상세 설명
+  - GLIBCXX_3.4.30 에러에 대한 2가지 해결 방법 추가
+  - 설치 검증 절차 추가
+
+*이 문서는 Isaac Lab v2.2.1 + Isaac Sim 5.0 기준으로 작성되었습니다.*
+*실제 설치 경험을 바탕으로 작성되어 실전 환경에서 검증되었습니다.*
