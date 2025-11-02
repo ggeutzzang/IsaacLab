@@ -6,16 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Isaac Lab**은 NVIDIA Isaac Sim 기반의 GPU 가속 로봇 학습 프레임워크입니다. 강화학습(RL), 모방학습(IL), 모션 플래닝 등의 워크플로우를 통합하며, 벡터화된 환경과 정확한 물리/센서 시뮬레이션을 제공합니다.
 
-- **버전:** 2.2.1 (Isaac Sim 4.5 / 5.0 호환)
+- **버전:** 2.3.0 (Isaac Sim 4.5 / 5.0 / 5.1 호환)
 - **Python:** 3.10+ (3.11 권장)
 - **PyTorch:** 2.7.0+cu128
 - **라이선스:** BSD-3-Clause (메인), Apache-2.0 (isaaclab_mimic)
 
 ## 환경 설정 및 빌드
 
-### 초기 설정 (v2.2.1) - 권장 방법
+### 초기 설정 (v2.3.0) - 권장 방법
 
-**중요:** Isaac Lab v2.2.1은 환경 이름을 `env_isaaclab`로 사용하는 것을 권장합니다.
+**중요:** Isaac Lab v2.3.0은 환경 이름을 `env_isaaclab`로 사용하는 것을 권장합니다.
 
 ```bash
 # 1. Conda 환경 생성 및 활성화
@@ -25,8 +25,8 @@ conda activate env_isaaclab
 # 2. PyTorch 설치 (CUDA 12.8)
 pip install torch==2.7.0 torchvision==0.22.0 --index-url https://download.pytorch.org/whl/cu128
 
-# 3. Isaac Sim 5.0 설치 (약 4.5GB 다운로드, 10-15분 소요)
-pip install 'isaacsim[all,extscache]==5.0.0' --extra-index-url https://pypi.nvidia.com
+# 3. Isaac Sim 5.1 설치 (약 4.5GB 다운로드, 10-15분 소요)
+pip install 'isaacsim[all,extscache]==5.1.0' --extra-index-url https://pypi.nvidia.com
 
 # 4. Isaac Lab 설치
 ./isaaclab.sh --install  # Linux
@@ -536,7 +536,7 @@ Received (<ufunc 'sph_legendre_p'>, ...)
 - `isaacsim.ros2.bridge`
 
 **원인:**
-- Isaac Sim 5.0이 SciPy 1.15.3을 설치하지만, 이 버전은 NumPy 2.x 전환용
+- Isaac Sim 5.0/5.1이 SciPy 1.15.3을 설치하지만, 이 버전은 NumPy 2.x 전환용
 - NumPy 1.26.0과 호환되지 않아 ufunc 타입 검사 실패
 
 **해결:**
@@ -696,11 +696,12 @@ pip list | grep -E "(isaaclab|scipy|numpy|torch)"
 # NumPy: 1.26.0
 # SciPy: 1.11.4 (중요!)
 # torch: 2.7.0+cu128
-# isaaclab: 0.47.2
-# isaaclab-assets: 0.2.2
-# isaaclab-mimic: 1.0.14
-# isaaclab-rl: 0.4.2
-# isaaclab-tasks: 0.11.1
+# isaacsim: 5.1.0.0
+# isaaclab: 0.47.4
+# isaaclab-assets: 0.2.3
+# isaaclab-mimic: 1.0.15
+# isaaclab-rl: 0.4.4
+# isaaclab-tasks: 0.11.6
 
 # 3. C++ 라이브러리 확인 (GLIBCXX 3.4.30+ 필요)
 strings $CONDA_PREFIX/lib/libstdc++.so.6 | grep "^GLIBCXX" | sort -V | tail -1
@@ -744,6 +745,12 @@ Isaac Lab은 원래 Orbit 프레임워크에서 시작되었습니다:
 
 ## 변경 이력
 
+- **2025-10-31 (업데이트 3)**: Isaac Sim 5.1.0 실제 설치 경험 반영
+  - Isaac Sim 5.0.0 → 5.1.0으로 권장 버전 변경
+  - 실제 설치된 패키지 버전 업데이트 (Isaac Lab 0.47.4 기준)
+  - SciPy 1.15.3 호환성 문제가 5.1에도 동일하게 적용됨 확인
+  - libstdcxx-ng 15.2.0 (GLIBCXX_3.4.34) 검증 완료
+
 - **2025-10-28 (업데이트 2)**: 환경 설정 실전 경험 반영
   - 권장 Conda 환경 이름을 `env_isaaclab`로 명시
   - Python 경로 문제 해결 방법 추가 (3가지 방법)
@@ -758,5 +765,5 @@ Isaac Lab은 원래 Orbit 프레임워크에서 시작되었습니다:
   - GLIBCXX_3.4.30 에러에 대한 2가지 해결 방법 추가
   - 설치 검증 절차 추가
 
-*이 문서는 Isaac Lab v2.2.1 + Isaac Sim 5.0 기준으로 작성되었습니다.*
+*이 문서는 Isaac Lab v2.3.0 + Isaac Sim 5.1 기준으로 작성되었습니다.*
 *실제 설치 경험을 바탕으로 작성되어 실전 환경에서 검증되었습니다.*
