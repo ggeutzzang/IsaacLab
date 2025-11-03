@@ -420,6 +420,157 @@ mdp.is_terminated       → 종료 조건 함수
 3. **Manager 초기화 로그**: 각 Manager가 어떤 Cfg를 받았는지
 4. **MDP 함수 실행**: 관찰/보상 함수가 올바른 값을 반환하는지
 
+#### 7. 실전 경험: 주요 함정과 해결책
+
+**함정 1: ManagerBasedEnv vs DirectRLEnv 혼동**
+
+❌ **잘못된 접근:**
+```python
+# DirectRLEnv 패턴 사용 (원본이 ManagerBasedEnv인데)
+class MyEnv(DirectRLEnv):
+    def _setup_scene(self):
+        spawn_ground_plane(...)
+        # 직접 구현...
+```
+
+✅ **올바른 접근:**
+```python
+# ManagerBasedEnv 패턴 사용 (원본과 동일)
+@configclass
+class MySceneCfg(InteractiveSceneCfg):
+    terrain = TerrainImporterCfg(...)
+    light = AssetBaseCfg(...)
+
+@configclass
+class MyEnvCfg(ManagerBasedEnvCfg):
+    scene: MySceneCfg = MySceneCfg(...)
+```
+
+**교훈:** 원본 코드의 아키텍처를 먼저 파악하고 동일한 패턴을 따라야 함.
+
+---
+
+**함정 2: ObservationManager 빈 그룹 에러**
+
+❌ **잘못된 코드:**
+```python
+@configclass
+class ObservationsCfg:
+    @configclass
+    class PolicyCfg(ObservationGroupCfg):
+        pass  # 빈 그룹!
+    policy: PolicyCfg = PolicyCfg()
+```
+
+**에러:**
+```
+RuntimeError: Unable to concatenate observation terms in group 'policy'.
+The shapes of the terms are: [].
+```
+
+✅ **해결:**
+```python
+@configclass
+class ObservationsCfg:
+    @configclass
+    class PolicyCfg(ObservationGroupCfg):
+        # 최소 1개의 term 필요
+        dummy_obs = ObservationTermCfg(func=dummy_observation)
+    policy: PolicyCfg = PolicyCfg()
+
+def dummy_observation(env) -> torch.Tensor:
+    """반드시 (num_envs, feature_dim) 텐서 반환"""
+    return torch.zeros(env.num_envs, 1, device=env.device)
+```
+
+**교훈:** ObservationManager는 최소 1개의 term 필요. ActionManager/EventManager는 0개 허용.
+
+---
+
+**함정 3: ManagerBasedEnv의 step() 반환값 혼동**
+
+❌ **잘못된 코드:**
+```python
+# RL 환경처럼 5개 값 기대
+obs, reward, terminated, truncated, info = env.step(action)
+```
+
+**에러:**
+```
+ValueError: not enough values to unpack (expected 5, got 2)
+```
+
+✅ **해결:**
+```python
+# ManagerBasedEnv는 2개만 반환 (obs, info)
+obs, info = env.step(action)
+
+# ManagerBasedRLEnv는 5개 반환
+obs, reward, terminated, truncated, info = rl_env.step(action)
+```
+
+**교훈:**
+- `ManagerBasedEnv`: 일반 환경용, `step()` → `(obs, info)`
+- `ManagerBasedRLEnv`: RL 환경용, `step()` → `(obs, reward, terminated, truncated, info)`
+
+---
+
+**함정 4: 관찰 함수 시그니처**
+
+❌ **잘못된 함수:**
+```python
+def my_observation() -> torch.Tensor:  # env 인자 없음
+    return torch.zeros(2, 3)
+```
+
+✅ **올바른 함수:**
+```python
+def my_observation(env, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+    """관찰 함수는 env를 첫 번째 인자로 받음"""
+    asset = env.scene[asset_cfg.name]
+    return asset.data.root_pos_w - env.scene.env_origins
+```
+
+**교훈:** MDP 함수는 항상 `env`를 첫 번째 인자로 받음.
+
+---
+
+**함정 5: prim_path 패턴 혼동**
+
+```python
+# 전역 경로 (모든 환경이 공유)
+terrain = TerrainImporterCfg(prim_path="/World/ground")
+light = AssetBaseCfg(prim_path="/World/light")
+
+# 환경별 경로 (각 환경마다 복제)
+cube = RigidObjectCfg(prim_path="{ENV_REGEX_NS}/cube")
+# → /World/envs/env_0/cube, /World/envs/env_1/cube, ...
+```
+
+**교훈:** `{ENV_REGEX_NS}`는 환경별로 다른 객체가 필요할 때 사용.
+
+---
+
+**함정 6: print문 남발로 코드 흐름 가독성 저하**
+
+❌ **비효율적:**
+```python
+print("=" * 80)
+print("[정보] Environment 생성 중...")
+print("=" * 80)
+print(f"환경 개수: {num_envs}")
+print(f"환경 간격: {spacing}m")
+# ... 수십 줄의 print문
+```
+
+✅ **간결하게:**
+```python
+print(f"Environment 생성 완료 | Scene entities: {list(env.scene.keys())}")
+print(f"Reset 완료 | Observation groups: {list(obs.keys())}\n")
+```
+
+**교훈:** 핵심 정보만 출력하여 코드 흐름 명확하게 유지.
+
 ### Import 정렬 순서 (isort)
 
 ```python
@@ -745,6 +896,14 @@ Isaac Lab은 원래 Orbit 프레임워크에서 시작되었습니다:
 
 ## 변경 이력
 
+- **2025-11-03 (업데이트 4)**: Phase 2 학습 경험 반영
+  - 개발 가이드라인에 "실전 경험: 주요 함정과 해결책" 섹션 추가
+  - ManagerBasedEnv vs DirectRLEnv 혼동 문제와 해결책
+  - ObservationManager 빈 그룹 에러 해결 방법
+  - ManagerBasedEnv의 step() 반환값 차이 명확화
+  - 관찰 함수 시그니처, prim_path 패턴, 코드 가독성 개선 팁
+  - `scripts/tutorials/03_envs/my_clone/` TDD 방식 클론 코딩 학습 진행 중
+
 - **2025-10-31 (업데이트 3)**: Isaac Sim 5.1.0 실제 설치 경험 반영
   - Isaac Sim 5.0.0 → 5.1.0으로 권장 버전 변경
   - 실제 설치된 패키지 버전 업데이트 (Isaac Lab 0.47.4 기준)
@@ -766,4 +925,4 @@ Isaac Lab은 원래 Orbit 프레임워크에서 시작되었습니다:
   - 설치 검증 절차 추가
 
 *이 문서는 Isaac Lab v2.3.0 + Isaac Sim 5.1 기준으로 작성되었습니다.*
-*실제 설치 경험을 바탕으로 작성되어 실전 환경에서 검증되었습니다.*
+*실제 설치 및 학습 경험을 바탕으로 작성되어 실전 환경에서 검증되었습니다.*
